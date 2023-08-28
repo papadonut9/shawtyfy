@@ -1,6 +1,6 @@
 # Shawtyfy
 
-![Shawtyfy logo](assets\Brand-shawtyfy.png "Shawtyfy logo")
+![Shawtyfy logo](assets/Brand-shawtyfy.png "Shawtyfy logo")
 
 Shawtyfy is a URL shortener written in Go. It uses Redis as the storage mechanism for superfast data retrieval.
 
