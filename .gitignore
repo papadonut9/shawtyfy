@@ -20,3 +20,6 @@ _test
 *.test
 *.out
 *.exe
+
+# environment files
+.env
