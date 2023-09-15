@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"time"
-
 	"github.com/go-redis/redis/v8"
 )
 
@@ -51,7 +50,7 @@ func InitializeStore() *StorageService {
 func saveUrlMapping(shortUrl string, originalUrl string, userid string) {
 	err := storeService.redisClient.Set(ctx, shortUrl, originalUrl, cacheDuration).Err()
 	if err != nil {
-		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl, originalUrl))
+		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
 
 	}
 }
