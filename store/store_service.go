@@ -3,8 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
+	"os"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 // Raw wrapper
@@ -16,7 +18,11 @@ type StorageService struct {
 var (
 	storeService = &StorageService{}
 	ctx          = context.Background()
+	dbstr = os.Getenv("REDIS_DB")
 )
+
+// environment variable string to integer conversion
+// redis_db := strconv.Atoi(dbstr);
 
 // Cache expiration duration
 const cacheDuration = 6 * time.Hour
@@ -24,8 +30,9 @@ const cacheDuration = 6 * time.Hour
 // Store service with pointer return
 func InitializeStore() *StorageService {
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "172.28.83.36:6379",
+		Addr:     os.Getenv("REDIS_ADDR"),
 		Password: "",
+		// DB:       strconv.Atoi(os.Getenv(REDIS_DB)),
 		DB:       0,
 	})
 
