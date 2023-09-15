@@ -1,6 +1,6 @@
 module github.com/papadonut9/shawtyfy
 
-go 1.21.0
+go 1.21
 
 require github.com/go-redis/redis v6.15.9+incompatible
 
