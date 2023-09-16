@@ -3,9 +3,9 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"os"
 	"time"
-	"github.com/go-redis/redis/v8"
 )
 
 // Raw wrapper
@@ -17,7 +17,7 @@ type StorageService struct {
 var (
 	storeService = &StorageService{}
 	ctx          = context.Background()
-	dbstr = os.Getenv("REDIS_DB")
+	dbstr        = os.Getenv("REDIS_DB")
 )
 
 // environment variable string to integer conversion
@@ -32,7 +32,7 @@ func InitializeStore() *StorageService {
 		Addr:     os.Getenv("REDIS_ADDR"),
 		Password: "",
 		// DB:       strconv.Atoi(os.Getenv(REDIS_DB)),
-		DB:       0,
+		DB: 0,
 	})
 
 	pong, err := redisClient.Ping(ctx).Result()
@@ -52,7 +52,6 @@ func saveUrlMapping(shortUrl string, originalUrl string, userid string) {
 	if err != nil {
 
 		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
-
 
 	}
 }
