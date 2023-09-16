@@ -29,7 +29,8 @@ const cacheDuration = 6 * time.Hour
 // Store service with pointer return
 func InitializeStore() *StorageService {
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_ADDR"),
+		// Addr:     os.Getenv("REDIS_ADDR"),
+		Addr:     "127.0.0.1:6379",
 		Password: "",
 		// DB:       strconv.Atoi(os.Getenv(REDIS_DB)),
 		DB: 0,
@@ -46,7 +47,7 @@ func InitializeStore() *StorageService {
 	return storeService
 }
 
-// Storage APIs
+// Save URL mapping by taking the shortened url, original url and user id
 func saveUrlMapping(shortUrl string, originalUrl string, userid string) {
 	err := storeService.redisClient.Set(ctx, shortUrl, originalUrl, cacheDuration).Err()
 	if err != nil {

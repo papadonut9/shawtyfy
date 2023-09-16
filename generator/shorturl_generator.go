@@ -22,7 +22,7 @@ func base58Encode(bytes []byte) string{
 	encoding := base58.BitcoinEncoding
 	encoded, err := encoding.Encode(bytes)
 	if err != nil{
-		fmt.Sprintf(err.Error())
+		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 	return string(encoded)
