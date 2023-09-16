@@ -11,23 +11,18 @@ const userId = "68a099a-610d-4237-89d9-2b6d099a20e2"
 func TestShortLinkGenerator(t *testing.T) {
 	originalUrl_1 := "https://youtu.be/dQw4w9WgXcQ"
 	shortUrl_1 := generateShortUrl(originalUrl_1, userId)
-	// t.Log(shortUrl_1)
 
 	originalUrl_2 := "github.com/papadonut9"
 	shortUrl_2 := generateShortUrl(originalUrl_2, userId)
-	// t.Log(shortUrl_2)
 
 	originalUrl_3 := "https://youtu.be/_sPXXL9YXok"
 	shortUrl_3 := generateShortUrl(originalUrl_3, userId)
-	// t.Log(shortUrl_3)
 
 	originalUrl_4 := "https://open.spotify.com/track/4QfVhHGCPVYLiQEnaeknJe"
 	shortUrl_4 := generateShortUrl(originalUrl_4, userId)
-	// t.Log(shortUrl_4)
 
 	originalUrl_5 := "https://open.spotify.com/track/2LMkwUfqC6S6s6qDVlEuzV"
 	shortUrl_5 := generateShortUrl(originalUrl_5, userId)
-	// t.Log(shortUrl_5)
 
 	assert.Equal(t, shortUrl_1, "EUsP4nKs")
 	assert.Equal(t, shortUrl_2, "SQkReYrz")
