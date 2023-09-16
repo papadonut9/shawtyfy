@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/papadonut9/shawtyfy/generator"
@@ -30,7 +31,7 @@ func CreateShortUrl(ctx *gin.Context) {
 	shortUrl := generator.GenerateShortLink(creationRequest.LongUrl, creationRequest.UserId)
 	store.SaveUrlMapping(shortUrl, creationRequest.LongUrl, creationRequest.UserId)
 
-	host := "http://localhost:9808"
+	host := "http://localhost:9808/"
 	ctx.JSON(200, gin.H{
 		"message":   "Short url creation successful!",
 		"short_url": host + shortUrl,
@@ -41,5 +42,10 @@ func CreateShortUrl(ctx *gin.Context) {
 func HandleShortUrlRedirect(ctx *gin.Context) {
 	shortUrl := ctx.Param("shortUrl")
 	initialUrl := store.RetrieveInitialUrl(shortUrl)
+
+	// Check if the initial URL is absolute or relative
+	if !strings.HasPrefix(initialUrl, "http://") && !strings.HasPrefix(initialUrl, "https://") {
+		initialUrl = "http://" + initialUrl
+	}
 	ctx.Redirect(302, initialUrl)
 }
