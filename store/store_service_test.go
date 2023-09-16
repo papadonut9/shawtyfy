@@ -19,13 +19,14 @@ func testStoreInit(t *testing.T) {
 }
 
 // Storage API Tests
-func testSetandGet(t *testing.T) {
+func TestSetandGet(t *testing.T) {
 	originalUrl := "https://youtu.be/dQw4w9WgXcQ"
 	userid := "950c182b-1745-4aa9-b872-d8c558fadc8d"
-	shortUrl := "https://rb.gy/lkoyw"
+	shortUrl := "lkoyw"
 
 	// persistent data mapping
-	SaveUrlMapping(originalUrl, userid, shortUrl)
+	// SaveUrlMapping(originalUrl, userid, shortUrl)
+	SaveUrlMapping(shortUrl, originalUrl, userid)
 
 	// fetch original url
 	receivedUrl := RetrieveInitialUrl(shortUrl)

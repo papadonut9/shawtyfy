@@ -25,7 +25,7 @@ var (
 // redis_db := strconv.Atoi(dbstr);
 
 // Cache expiration duration
-const cacheDuration = 6 * time.Hour
+const cacheDuration = 24 * time.Hour
 
 // Store service with pointer return
 func InitializeStore() *StorageService {
