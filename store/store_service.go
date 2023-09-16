@@ -3,9 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"os"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 // Raw wrapper
@@ -48,7 +49,7 @@ func InitializeStore() *StorageService {
 }
 
 // Save URL mapping by taking the shortened url, original url and user id
-func saveUrlMapping(shortUrl string, originalUrl string, userid string) {
+func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
 	err := storeService.redisClient.Set(ctx, shortUrl, originalUrl, cacheDuration).Err()
 	if err != nil {
 
@@ -57,7 +58,7 @@ func saveUrlMapping(shortUrl string, originalUrl string, userid string) {
 	}
 }
 
-func retrieveInitialUrl(shortUrl string) string {
+func RetrieveInitialUrl(shortUrl string) string {
 	res, err := storeService.redisClient.Get(ctx, shortUrl).Result()
 
 	if err != nil {

@@ -16,12 +16,12 @@ func SetupRoutes(r *gin.Engine) {
 
     // Endpoint to create a short URL
     r.POST("/create-short-url", func(ctx *gin.Context) {
-        handler.CreateShortURL(ctx)
+        handler.CreateShortUrl(ctx)
     })
 
     // Endpoint to handle short URL redirection
     r.GET("/shortUrl", func(ctx *gin.Context) {
-        handler.HandleShortURLRedirect(ctx)
+        handler.HandleShortUrlRedirect(ctx)
     })
 
     // Add more endpoints as needed
