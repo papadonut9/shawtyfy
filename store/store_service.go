@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -14,11 +13,16 @@ type StorageService struct {
 	redisClient *redis.Client
 }
 
+// type UrlData struct {
+// 	url    string
+// 	userid string
+// }
+
 // high level declaration
 var (
 	storeService = &StorageService{}
 	ctx          = context.Background()
-	dbstr        = os.Getenv("REDIS_DB")
+	// dbstr        = os.Getenv("REDIS_DB")
 )
 
 // environment variable string to integer conversion
@@ -50,20 +54,52 @@ func InitializeStore() *StorageService {
 
 // Save URL mapping by taking the shortened url, original url and user id
 func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
-	err := storeService.redisClient.Set(ctx, shortUrl, originalUrl, cacheDuration).Err()
+
+	// data := map[string]interface{}{
+	// 	"url":    originalUrl,
+	// 	"userid": userid,
+	// }
+	// jsonData, errj := json.Marshal(data)
+	//   if errj != nil {
+	//       panic(fmt.Sprintf("Failed to marshal data to JSON: %v", errj))
+	//   }
+
+	// set hash to the database
+	// func
+	err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid).Err()
+	// err := storeService.redisClient.HMSet(ctx, shortUrl, data, cacheDuration).Err()
+	// converting map to json string
 	if err != nil {
 
 		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
 
 	}
+
+	// Set key
+	// err := storeService.redisClient.Set(ctx, shortUrl, originalUrl, cacheDuration).Err()
+	// if err != nil {
+	// 	panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
+	// }
 }
 
 func RetrieveInitialUrl(shortUrl string) string {
-	res, err := storeService.redisClient.Get(ctx, shortUrl).Result()
+	// res, err := storeService.redisClient.Get(ctx, shortUrl).Result()
+	res, err := storeService.redisClient.HGet(ctx, shortUrl, "url").Result()
 
+	// fetch strings
 	if err != nil {
 		panic(fmt.Sprintf("Failed RetrieveInitialUrl url | Error: %v - Shorturl: %s\n", err, shortUrl))
 	}
 
 	return res
+}
+
+func RetreiveKeyCount() (int64, error){
+	res, err := storeService.redisClient.DBSize(ctx).Result()
+
+	if err != nil {
+		panic(fmt.Sprintf("Failed retreiving keys"))
+	}
+
+	return res, err;
 }
