@@ -23,4 +23,9 @@ func SetupRoutes(r *gin.Engine) {
 	r.GET("/:shortUrl", func(ctx *gin.Context) {
 		handler.HandleShortUrlRedirect(ctx)
 	})
+
+	// Endpoint to fetch total key count
+	r.GET("/getKeyCount", func(ctx *gin.Context) {
+		handler.HandleKeyCount(ctx)
+	})
 }

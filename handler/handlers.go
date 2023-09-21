@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -8,12 +9,6 @@ import (
 	"github.com/papadonut9/shawtyfy/generator"
 	"github.com/papadonut9/shawtyfy/store"
 )
-
-// Request model definition
-// type UrlCreateRequest struct {
-// 	LongUrl string `json: "long_url" binding:"required"`
-// 	UserId  string `json: "user_id" binding:"required"`
-// }
 
 type UrlCreateRequest struct {
 	LongUrl string `json:"long_url" binding:"required"`
@@ -42,10 +37,23 @@ func CreateShortUrl(ctx *gin.Context) {
 func HandleShortUrlRedirect(ctx *gin.Context) {
 	shortUrl := ctx.Param("shortUrl")
 	initialUrl := store.RetrieveInitialUrl(shortUrl)
-
+	
 	// Check if the initial URL is absolute or relative
 	if !strings.HasPrefix(initialUrl, "http://") && !strings.HasPrefix(initialUrl, "https://") {
 		initialUrl = "http://" + initialUrl
 	}
 	ctx.Redirect(302, initialUrl)
+}
+
+func HandleKeyCount(ctx *gin.Context){
+	count, err := store.RetreiveKeyCount()
+	
+	if err != nil{
+		panic(fmt.Sprintf("Error retreiving key count"))
+	}
+	
+	// host := "http://localhost:9808/"
+	ctx.JSON(200, gin.H{
+		"key_count": count,
+	})
 }
