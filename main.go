@@ -2,18 +2,23 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
+	"github.com/papadonut9/shawtyfy/endpoint"
+	"github.com/papadonut9/shawtyfy/store"
 )
 
+// Main function
 func main() {
-	r := gin.Default()
-	r.GET("/", func(c *gin.Context){
-		c.JSON(200, gin.H{
-			"message": "Hello Shawtyfy!!",
-		})
-	})
+	route := gin.Default()
+	
+	// Calling setupRoutes to define endpoints
+	endpoint.SetupRoutes(route)
 
-	error := r.Run(":9808")
+	// store initialization
+	store.InitializeStore()
+
+	error := route.Run(":9808")
 	if error != nil{
 		panic(fmt.Sprintf("Failed to start web server: Error: %v", error))
 	}
