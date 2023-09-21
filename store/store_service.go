@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -65,8 +66,10 @@ func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
 	//   }
 
 	// set hash to the database
-	// func
-	err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid).Err()
+	// err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid, "shorturl", shortUrl).Err()
+
+	// append to hash set
+	err := storeService.redisClient.HSet(ctx, userid, shortUrl, originalUrl).Err()
 	// err := storeService.redisClient.HMSet(ctx, shortUrl, data, cacheDuration).Err()
 	// converting map to json string
 	if err != nil {
@@ -74,6 +77,10 @@ func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
 		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
 
 	}
+	storeService.redisClient.Expire(ctx, shortUrl, cacheDuration)
+	// if expErr != nil {
+	// 	panic(fmt.Sprintf("Failed setting key expiry on key %s| Error: %v ", shortUrl, expErr))
+	// }
 
 	// Set key
 	// err := storeService.redisClient.Set(ctx, shortUrl, originalUrl, cacheDuration).Err()
@@ -82,24 +89,72 @@ func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
 	// }
 }
 
-func RetrieveInitialUrl(shortUrl string) string {
-	// res, err := storeService.redisClient.Get(ctx, shortUrl).Result()
-	res, err := storeService.redisClient.HGet(ctx, shortUrl, "url").Result()
+// func RetrieveInitialUrl(shortUrl string, userId string) string {
+// 	// res, err := storeService.redisClient.Get(ctx, shortUrl).Result()
+// 	res, err := storeService.redisClient.HGet(ctx, userId, shortUrl).Result()
 
-	// fetch strings
-	if err != nil {
-		panic(fmt.Sprintf("Failed RetrieveInitialUrl url | Error: %v - Shorturl: %s\n", err, shortUrl))
+// 	// fetch strings
+// 	if err != nil {
+// 		panic(fmt.Sprintf("Failed RetrieveInitialUrl url | Error: %v - Shorturl: %s\n", err, shortUrl))
+// 	}
+
+// 	return res
+// }
+
+func RetrieveInitialUrl(shortUrl string, userId string) (string, error) {
+	// res, err := storeService.redisClient.Get(ctx, shortUrl).Result()
+	res, err := storeService.redisClient.HGet(ctx, userId, shortUrl).Result()
+
+	if err == redis.Nil {
+		// Key not found in Redis
+		return "", errors.New("short url not found")
+	} else if err != nil {
+		// Handle other Redis errors
+		return "", err
 	}
 
-	return res
+	return res, nil
 }
 
-func RetreiveKeyCount() (int64, error){
+func RetreiveKeyCount() (int64, error) {
 	res, err := storeService.redisClient.DBSize(ctx).Result()
 
 	if err != nil {
-		panic(fmt.Sprintf("Failed retreiving keys"))
+		panic(fmt.Sprintf("Failed retreiving keys | error: %v", err))
 	}
 
-	return res, err;
+	return res, err
+}
+
+// Fetch URLs by User ID
+// func FetchUrlsByUserID(userid string) map[string]string {
+// 	// Use the HGetAll function to retrieve all key-value pairs associated with the user ID.
+// 	urls, err := storeService.redisClient.HGetAll(ctx, userid).Result()
+// 	if err != nil {
+// 		panic(fmt.Sprintf("Failed to fetch URLs by UserID | Error: %v - UserID: %s\n", err, userid))
+// 	}
+
+// 	// Convert the map[string]string to a map of short URL to original URL.
+// 	urlMap := make(map[string]string, len(urls))
+// 	for shortURL, originalURL := range urls {
+// 		urlMap[shortURL] = originalURL
+// 	}
+
+// 	return urlMap
+// }
+
+func FetchUrlsByUserID(userid string) map[string]string {
+	// Use the HGetAll function to retrieve all key-value pairs associated with the user ID.
+	urls, err := storeService.redisClient.HGetAll(ctx, userid).Result()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to fetch URLs by UserID | Error: %v - UserID: %s\n", err, userid))
+	}
+
+	// Convert the map[string]string to a map of short URL to original URL.
+	urlMap := make(map[string]string, len(urls))
+	for shortURL, originalURL := range urls {
+		urlMap[shortURL] = originalURL
+	}
+
+	return urlMap
 }

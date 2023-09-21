@@ -28,4 +28,8 @@ func SetupRoutes(r *gin.Engine) {
 	r.GET("/getKeyCount", func(ctx *gin.Context) {
 		handler.HandleKeyCount(ctx)
 	})
+
+	r.GET("/fetch-url-by-id", func(ctx *gin.Context) {
+		handler.HandleFetchUrlbyId(ctx)
+	})
 }
