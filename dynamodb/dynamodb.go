@@ -25,6 +25,33 @@ var (
 
 const tableName = "shawtyfy-dev"
 
+// populate redis cache with data from dynamodb on cold restart
+func PopulateRedisFromDynamoDb(redisClient *redis.Client) error {
+	dynamoDBService := InitializeDynamoDB()
+
+	// Querying whole table
+	res, err := dynamoDBService.dynamoDBClient.Scan(&dynamodb.ScanInput{
+		TableName: aws.String(tableName),
+	})
+	if err != nil {
+		log.Printf("Failed scanning DynamoDb table: %v\n", err)
+		return err
+	}
+
+	// Iterate and store each item in Redis
+	for _, item := range res.Items {
+		shortUrl := aws.StringValue(item["shortUrl"].S)
+		originalUrl := aws.StringValue(item["originalUrl"].S)
+		userid := aws.StringValue(item["userid"].S)
+
+		// Map to redis
+		store.SaveUrlMapping(shortUrl, originalUrl, userid)
+	}
+
+	log.Println("Successfully populated Redis from Remote")
+	return nil
+}
+
 func InitializeDynamoDB() *DynamoDBService {
 	sesh := session.Must(session.NewSessionWithOptions(
 		session.Options{
@@ -33,10 +60,26 @@ func InitializeDynamoDB() *DynamoDBService {
 
 	dynamoDBClient := dynamodb.New(sesh)
 
+	// initialize dynamoDB service
 	dynamoDBService.dynamoDBClient = dynamoDBClient
+	// dynamoDBService = &DynamoDBService{
+	// 	dynamoDBClient: dynamoDBClient,
+	// }
+	// Populate Redis from DynamoDB on cold boot
+	storeService := store.InitializeStore()
+	if storeService == nil {
+		log.Println("Error initializing store")
+		return dynamoDBService
+	}
+
+	// populate redis from dynamodb on cold boot
+	err := PopulateRedisFromDynamoDb(storeService.GetRedisClient())
+	if err != nil {
+		log.Printf("Error populating Redis from Remote: %v\n", err)
+	}
 
 	// listen for new urls in background
-	go ListenForNewURL(store.InitializeStore().GetRedisClient())
+	// go ListenForNewURL(store.InitializeStore().GetRedisClient())
 
 	return dynamoDBService
 }

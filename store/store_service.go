@@ -11,17 +11,10 @@ import (
 type StorageService struct {
 	redisClient *redis.Client
 }
-
-// type UrlData struct {
-// 	url    string
-// 	userid string
-// }
-
 // high level declaration
 var (
 	storeService = &StorageService{}
 	ctx          = context.Background()
-	// dbstr        = os.Getenv("REDIS_DB")
 )
 
 // Cache expiration duration
@@ -40,7 +33,7 @@ func InitializeStore() *StorageService {
 		panic(fmt.Sprintf("Error init redis: %v", err))
 	}
 
-	fmt.Printf("\nRedis Started successfully: pong message = {%s}", pong)
+	fmt.Printf("\nRedis Started successfully: pong message = {%s}\n", pong)
 	storeService.redisClient = redisClient
 
 	return storeService

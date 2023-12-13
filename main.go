@@ -16,16 +16,15 @@ func main() {
 	// Calling setupRoutes to define endpoints
 	endpoint.SetupRoutes(route)
 
-	// initialize dynamodb service
+	// Initialize dynamodb service and store service
 	dynamodb.InitializeDynamoDB()
 
-	// store initialization
-	store.InitializeStore()
-
+	storeService := store.InitializeStore()
+	client := storeService.GetRedisClient()
 	// fetch context from middleware
 	route.Use(
 		func(ctx *gin.Context) {
-			go dynamodb.ListenForNewUrl(ctx, store.InitializeStore().GetRedisClient())
+			go dynamodb.ListenForNewUrl(ctx, client)
 		})
 
 	// start webserver
