@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -25,20 +24,15 @@ var (
 	// dbstr        = os.Getenv("REDIS_DB")
 )
 
-// environment variable string to integer conversion
-// redis_db := strconv.Atoi(dbstr);
-
 // Cache expiration duration
-const cacheDuration = 24 * time.Hour
+// const cacheDuration = 24 * time.Hour
 
 // Store service with pointer return
 func InitializeStore() *StorageService {
 	redisClient := redis.NewClient(&redis.Options{
-		// Addr:     os.Getenv("REDIS_ADDR"),
 		Addr:     "127.0.0.1:6379",
 		Password: "",
-		// DB:       strconv.Atoi(os.Getenv(REDIS_DB)),
-		DB: 0,
+		DB:       0,
 	})
 
 	pong, err := redisClient.Ping(ctx).Result()
@@ -52,34 +46,25 @@ func InitializeStore() *StorageService {
 	return storeService
 }
 
+// Returns the Redis client
+func (s *StorageService) GetRedisClient() *redis.Client {
+	return s.redisClient
+}
+
 // Save URL mapping by taking the shortened url, original url and user id
 func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
 
-	// data := map[string]interface{}{
-	// 	"url":    originalUrl,
-	// 	"userid": userid,
-	// }
-	// jsonData, errj := json.Marshal(data)
-	//   if errj != nil {
-	//       panic(fmt.Sprintf("Failed to marshal data to JSON: %v", errj))
-	//   }
-
 	// set hash to the database
-	// func
 	err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid).Err()
-	// err := storeService.redisClient.HMSet(ctx, shortUrl, data, cacheDuration).Err()
-	// converting map to json string
 	if err != nil {
-
 		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
-
 	}
 
-	// Set key
-	// err := storeService.redisClient.Set(ctx, shortUrl, originalUrl, cacheDuration).Err()
-	// if err != nil {
-	// 	panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
-	// }
+	// Publish message on redis Channel
+	err = storeService.redisClient.Publish(ctx, "new_url_added", shortUrl).Err()
+	if err != nil {
+		fmt.Printf("Error publishing message: %v", err)
+	}
 }
 
 func RetrieveInitialUrl(shortUrl string) string {
@@ -94,12 +79,23 @@ func RetrieveInitialUrl(shortUrl string) string {
 	return res
 }
 
-func RetreiveKeyCount() (int64, error){
+func RetreiveUserId(shortUrl string) string {
+	res, err := storeService.redisClient.HGet(ctx, shortUrl, "userid").Result()
+
+	// fetch strings
+	if err != nil {
+		panic(fmt.Sprintf("Failed RetrieveUserId id | Error: %v - Shorturl: %s\n", err, shortUrl))
+	}
+
+	return res
+}
+
+func RetreiveKeyCount() (int64, error) {
 	res, err := storeService.redisClient.DBSize(ctx).Result()
 
 	if err != nil {
-		panic(fmt.Sprintf("Failed retreiving keys"))
+		panic(fmt.Sprintf("Failed retreiving keys: %v", err))
 	}
 
-	return res, err;
+	return res, err
 }
