@@ -25,7 +25,15 @@ func SetupRoutes(r *gin.Engine) {
 	})
 
 	// Endpoint to fetch total key count
-	r.GET("/getKeyCount", func(ctx *gin.Context) {
+	r.GET("/get-key-count", func(ctx *gin.Context) {
 		handler.HandleKeyCount(ctx)
+	})
+
+	r.GET("/get-all-keys", func(ctx *gin.Context){
+		handler.RetreiveAllKeys(ctx)
+	})
+
+	r.POST("/delete", func(ctx *gin.Context) {
+		handler.DeleteKey(ctx)
 	})
 }

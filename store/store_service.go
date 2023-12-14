@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -85,11 +86,34 @@ func RetreiveUserId(shortUrl string) string {
 	return res
 }
 
+// Returns total number of keys in the redis.
 func RetreiveKeyCount() (int64, error) {
 	res, err := storeService.redisClient.DBSize(ctx).Result()
 
 	if err != nil {
 		panic(fmt.Sprintf("Failed retreiving keys: %v", err))
+	}
+
+	return res, err
+}
+
+// Returns all the keys in the cache.
+func RetreiveAllKeys() ([]string, error) {
+	keys, err := storeService.redisClient.Keys(ctx, "*").Result()
+
+	if err != nil {
+		log.Println("Error retrieving keys: ", err)
+	}
+
+	return keys, err
+}
+
+// Removes the key from cache
+func RemoveKey(key string) (int64, error){
+	res, err := storeService.redisClient.Del(ctx, key).Result()
+
+	if err != nil {
+		panic(fmt.Sprintf("Error deleting key: %v", err))
 	}
 
 	return res, err

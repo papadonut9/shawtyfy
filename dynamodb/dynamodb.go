@@ -2,6 +2,7 @@ package dynamodb
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -160,4 +161,28 @@ func FetchAndPopulateRedis() error {
 	}
 
 	return nil
+}
+
+func RemoveUrl(shortUrl string) (string, error) {
+
+	if shortUrl == "" {
+		return "EMPTY STRING", fmt.Errorf("Short URL cannot be empty")
+	}
+
+	input := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"shortUrl": {
+				S: aws.String(shortUrl),
+			},
+		},
+		TableName: aws.String(tableName),
+	}
+
+	_, err := dynamoDBService.dynamoDBClient.DeleteItemWithContext(context.Background(), input)
+	if err != nil {
+		log.Printf("Failed Deleting from DynamoDB: %v\n", err)
+		return "", err
+	}
+
+	return "OK", nil
 }
