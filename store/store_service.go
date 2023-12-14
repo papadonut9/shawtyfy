@@ -12,11 +12,6 @@ type StorageService struct {
 	redisClient *redis.Client
 }
 
-// type UrlData struct {
-// 	url    string
-// 	userid string
-// }
-
 // high level declaration
 var (
 	storeService = &StorageService{}
