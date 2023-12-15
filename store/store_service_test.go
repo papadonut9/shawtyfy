@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,11 +29,7 @@ func TestSetandGet(t *testing.T) {
 	SaveUrlMapping(shortUrl, originalUrl, userid)
 
 	// fetch original url
-	receivedUrl, err := RetrieveInitialUrl(shortUrl, userid)
-
-	if err != nil{
-		panic(fmt.Sprint(err))
-	}
+	receivedUrl := RetrieveInitialUrl(shortUrl)
 
 	assert.Equal(t, originalUrl, receivedUrl)
 }
