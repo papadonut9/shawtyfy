@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/papadonut9/shawtyfy/dynamodb"
 	"github.com/papadonut9/shawtyfy/endpoint"
@@ -12,6 +13,12 @@ import (
 // Main function
 func main() {
 	route := gin.Default()
+
+	// Middleware to allow CORS
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"} // Replace with your React app's origin
+	config.AllowHeaders = []string{"Origin", "Content-Type"}
+	route.Use(cors.New(config))
 
 	// Calling setupRoutes to define endpoints
 	endpoint.SetupRoutes(route)

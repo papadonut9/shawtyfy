@@ -33,3 +33,16 @@ func TestSetandGet(t *testing.T) {
 
 	assert.Equal(t, originalUrl, receivedUrl)
 }
+
+func TestFetchMetadata(t *testing.T) {
+	originalUrl := "https://youtu.be/dQw4w9WgXcQ"
+	userid := "950c182b-1745-4aa9-b872-d8c558fadc8d"
+	shortUrl := "lkoyw"
+
+	SaveUrlMapping(shortUrl, originalUrl, userid)
+
+	receivedUserId, receivedUrl := FetchMetadata(shortUrl)
+
+	assert.Equal(t, userid, receivedUserId)
+	assert.Equal(t, originalUrl, receivedUrl)
+}

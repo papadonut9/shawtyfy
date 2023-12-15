@@ -29,11 +29,15 @@ func SetupRoutes(r *gin.Engine) {
 		handler.HandleKeyCount(ctx)
 	})
 
-	r.GET("/get-all-keys", func(ctx *gin.Context){
+	r.GET("/get-all-keys", func(ctx *gin.Context) {
 		handler.RetreiveAllKeys(ctx)
 	})
 
 	r.POST("/delete", func(ctx *gin.Context) {
 		handler.DeleteKey(ctx)
+	})
+
+	r.POST("/get-metadata", func(ctx *gin.Context) {
+		handler.GetMetadata(ctx)
 	})
 }

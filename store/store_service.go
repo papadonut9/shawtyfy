@@ -109,7 +109,7 @@ func RetreiveAllKeys() ([]string, error) {
 }
 
 // Removes the key from cache
-func RemoveKey(key string) (int64, error){
+func RemoveKey(key string) (int64, error) {
 	res, err := storeService.redisClient.Del(ctx, key).Result()
 
 	if err != nil {
@@ -117,4 +117,11 @@ func RemoveKey(key string) (int64, error){
 	}
 
 	return res, err
+}
+
+func FetchMetadata(key string) (userid string, url string) {
+	userid = RetreiveUserId(key)
+	url = RetrieveInitialUrl(key)
+
+	return userid, url
 }

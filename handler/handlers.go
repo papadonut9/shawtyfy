@@ -16,7 +16,7 @@ type UrlCreateRequest struct {
 	UserId  string `json:"user_id" binding:"required"`
 }
 
-type UrlDeleteRequest struct {
+type UrlRequest struct {
 	ShortUrl string `json:"short_url" binding:"required"`
 }
 
@@ -78,7 +78,7 @@ func RetreiveAllKeys(ctx *gin.Context) {
 }
 
 func DeleteKey(ctx *gin.Context) {
-	var deletionRequest UrlDeleteRequest
+	var deletionRequest UrlRequest
 
 	if err := ctx.ShouldBindJSON(&deletionRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -126,25 +126,19 @@ func DeleteKey(ctx *gin.Context) {
 	})
 }
 
-/*	MESSAGE STRUCTURE
-on success
-{
-	"message": "deletion successful",
-	"redis": "OK",
-	"dynamodb": "OK"
-}
+func GetMetadata(ctx *gin.Context) {
+	var urlRequest UrlRequest
 
-partial delete(if deletion does not occur from either redis or dynamodb)
-{
-	"message": "deletion unsuccessful",
-	"redis": "FAIL",
-	"dynamodb": "OK"
-}
+	if err := ctx.ShouldBindJSON(&urlRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-unsuccessful delete
-{
-	"message": "deletion unsuccessful",
-	"redis": "FAIL",
-	"dynamodb": "FAIL"
+	key := urlRequest.ShortUrl
+	userid, url := store.FetchMetadata(key)
+
+	ctx.JSON(200, gin.H{
+		"url":     url,
+		"user_id": userid,
+	})
 }
-*/
