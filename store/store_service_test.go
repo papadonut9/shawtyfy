@@ -2,6 +2,7 @@ package store
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -23,6 +24,7 @@ func TestSetandGet(t *testing.T) {
 	originalUrl := "https://youtu.be/dQw4w9WgXcQ"
 	userid := "950c182b-1745-4aa9-b872-d8c558fadc8d"
 	shortUrl := "lkoyw"
+	const cacheDuration = 24 * time.Hour
 
 	// persistent data mapping
 	// SaveUrlMapping(originalUrl, userid, shortUrl)

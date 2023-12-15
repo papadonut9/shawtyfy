@@ -52,10 +52,11 @@ func (s *StorageService) GetRedisClient() *redis.Client {
 func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
 
 	// set hash to the database
-	err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid, cacheDuration).Err()
+	err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid).Err()
 	if err != nil {
 		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
 	}
+	storeService.redisClient.Expire(ctx, shortUrl, cacheDuration)
 
 	// Publish message on redis Channel
 	err = storeService.redisClient.Publish(ctx, "new_url_added", shortUrl).Err()
