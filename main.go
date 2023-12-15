@@ -16,7 +16,7 @@ func main() {
 
 	// Middleware to allow CORS
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"} // Replace with your React app's origin
+	config.AllowOrigins = []string{"http://localhost:3000"} 
 	config.AllowHeaders = []string{"Origin", "Content-Type"}
 	route.Use(cors.New(config))
 

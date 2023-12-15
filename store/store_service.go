@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -21,7 +22,7 @@ var (
 )
 
 // Cache expiration duration
-// const cacheDuration = 24 * time.Hour
+const cacheDuration = 24 * time.Hour
 
 // Store service with pointer return
 func InitializeStore() *StorageService {
@@ -51,7 +52,7 @@ func (s *StorageService) GetRedisClient() *redis.Client {
 func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
 
 	// set hash to the database
-	err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid).Err()
+	err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid, cacheDuration).Err()
 	if err != nil {
 		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
 	}
