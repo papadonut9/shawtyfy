@@ -2,8 +2,8 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -14,11 +14,6 @@ type StorageService struct {
 	redisClient *redis.Client
 }
 
-// type UrlData struct {
-// 	url    string
-// 	userid string
-// }
-
 // high level declaration
 var (
 	storeService = &StorageService{}
@@ -26,20 +21,15 @@ var (
 	// dbstr        = os.Getenv("REDIS_DB")
 )
 
-// environment variable string to integer conversion
-// redis_db := strconv.Atoi(dbstr);
-
 // Cache expiration duration
 const cacheDuration = 24 * time.Hour
 
 // Store service with pointer return
 func InitializeStore() *StorageService {
 	redisClient := redis.NewClient(&redis.Options{
-		// Addr:     os.Getenv("REDIS_ADDR"),
 		Addr:     "127.0.0.1:6379",
 		Password: "",
-		// DB:       strconv.Atoi(os.Getenv(REDIS_DB)),
-		DB: 0,
+		DB:       0,
 	})
 
 	pong, err := redisClient.Ping(ctx).Result()
@@ -53,108 +43,87 @@ func InitializeStore() *StorageService {
 	return storeService
 }
 
+// Returns the Redis client
+func (s *StorageService) GetRedisClient() *redis.Client {
+	return s.redisClient
+}
+
 // Save URL mapping by taking the shortened url, original url and user id
 func SaveUrlMapping(shortUrl string, originalUrl string, userid string) {
 
-	// data := map[string]interface{}{
-	// 	"url":    originalUrl,
-	// 	"userid": userid,
-	// }
-	// jsonData, errj := json.Marshal(data)
-	//   if errj != nil {
-	//       panic(fmt.Sprintf("Failed to marshal data to JSON: %v", errj))
-	//   }
-
 	// set hash to the database
-	// err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid, "shorturl", shortUrl).Err()
-
-	// append to hash set
-	err := storeService.redisClient.HSet(ctx, userid, shortUrl, originalUrl).Err()
-	// err := storeService.redisClient.HMSet(ctx, shortUrl, data, cacheDuration).Err()
-	// converting map to json string
+	err := storeService.redisClient.HSet(ctx, shortUrl, "url", originalUrl, "userid", userid).Err()
 	if err != nil {
-
 		panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
-
 	}
 	storeService.redisClient.Expire(ctx, shortUrl, cacheDuration)
-	// if expErr != nil {
-	// 	panic(fmt.Sprintf("Failed setting key expiry on key %s| Error: %v ", shortUrl, expErr))
-	// }
 
-	// Set key
-	// err := storeService.redisClient.Set(ctx, shortUrl, originalUrl, cacheDuration).Err()
-	// if err != nil {
-	// 	panic(fmt.Sprintf("Failed Saving key url | Error: %v - Shorturl: %s\n", err, shortUrl))
-	// }
+	// Publish message on redis Channel
+	err = storeService.redisClient.Publish(ctx, "new_url_added", shortUrl).Err()
+	if err != nil {
+		fmt.Printf("Error publishing message: %v", err)
+	}
 }
 
-// func RetrieveInitialUrl(shortUrl string, userId string) string {
-// 	// res, err := storeService.redisClient.Get(ctx, shortUrl).Result()
-// 	res, err := storeService.redisClient.HGet(ctx, userId, shortUrl).Result()
-
-// 	// fetch strings
-// 	if err != nil {
-// 		panic(fmt.Sprintf("Failed RetrieveInitialUrl url | Error: %v - Shorturl: %s\n", err, shortUrl))
-// 	}
-
-// 	return res
-// }
-
-func RetrieveInitialUrl(shortUrl string, userId string) (string, error) {
+func RetrieveInitialUrl(shortUrl string) string {
 	// res, err := storeService.redisClient.Get(ctx, shortUrl).Result()
-	res, err := storeService.redisClient.HGet(ctx, userId, shortUrl).Result()
+	res, err := storeService.redisClient.HGet(ctx, shortUrl, "url").Result()
 
-	if err == redis.Nil {
-		// Key not found in Redis
-		return "", errors.New("short url not found")
-	} else if err != nil {
-		// Handle other Redis errors
-		return "", err
+	// fetch strings
+	if err != nil {
+		panic(fmt.Sprintf("Failed RetrieveInitialUrl url | Error: %v - Shorturl: %s\n", err, shortUrl))
 	}
 
-	return res, nil
+	return res
 }
 
+func RetreiveUserId(shortUrl string) string {
+	res, err := storeService.redisClient.HGet(ctx, shortUrl, "userid").Result()
+
+	// fetch strings
+	if err != nil {
+		panic(fmt.Sprintf("Failed RetrieveUserId id | Error: %v - Shorturl: %s\n", err, shortUrl))
+	}
+
+	return res
+}
+
+// Returns total number of keys in the redis.
 func RetreiveKeyCount() (int64, error) {
 	res, err := storeService.redisClient.DBSize(ctx).Result()
 
 	if err != nil {
-		panic(fmt.Sprintf("Failed retreiving keys | error: %v", err))
+		panic(fmt.Sprintf("Failed retreiving keys: %v", err))
 	}
 
 	return res, err
 }
 
-// Fetch URLs by User ID
-// func FetchUrlsByUserID(userid string) map[string]string {
-// 	// Use the HGetAll function to retrieve all key-value pairs associated with the user ID.
-// 	urls, err := storeService.redisClient.HGetAll(ctx, userid).Result()
-// 	if err != nil {
-// 		panic(fmt.Sprintf("Failed to fetch URLs by UserID | Error: %v - UserID: %s\n", err, userid))
-// 	}
+// Returns all the keys in the cache.
+func RetreiveAllKeys() ([]string, error) {
+	keys, err := storeService.redisClient.Keys(ctx, "*").Result()
 
-// 	// Convert the map[string]string to a map of short URL to original URL.
-// 	urlMap := make(map[string]string, len(urls))
-// 	for shortURL, originalURL := range urls {
-// 		urlMap[shortURL] = originalURL
-// 	}
-
-// 	return urlMap
-// }
-
-func FetchUrlsByUserID(userid string) map[string]string {
-	// Use the HGetAll function to retrieve all key-value pairs associated with the user ID.
-	urls, err := storeService.redisClient.HGetAll(ctx, userid).Result()
 	if err != nil {
-		panic(fmt.Sprintf("Failed to fetch URLs by UserID | Error: %v - UserID: %s\n", err, userid))
+		log.Println("Error retrieving keys: ", err)
 	}
 
-	// Convert the map[string]string to a map of short URL to original URL.
-	urlMap := make(map[string]string, len(urls))
-	for shortURL, originalURL := range urls {
-		urlMap[shortURL] = originalURL
+	return keys, err
+}
+
+// Removes the key from cache
+func RemoveKey(key string) (int64, error) {
+	res, err := storeService.redisClient.Del(ctx, key).Result()
+
+	if err != nil {
+		panic(fmt.Sprintf("Error deleting key: %v", err))
 	}
 
-	return urlMap
+	return res, err
+}
+
+func FetchMetadata(key string) (userid string, url string) {
+	userid = RetreiveUserId(key)
+	url = RetrieveInitialUrl(key)
+
+	return userid, url
 }

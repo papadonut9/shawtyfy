@@ -1,8 +1,8 @@
 package store
 
 import (
-	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -24,17 +24,27 @@ func TestSetandGet(t *testing.T) {
 	originalUrl := "https://youtu.be/dQw4w9WgXcQ"
 	userid := "950c182b-1745-4aa9-b872-d8c558fadc8d"
 	shortUrl := "lkoyw"
+	const cacheDuration = 24 * time.Hour
 
 	// persistent data mapping
 	// SaveUrlMapping(originalUrl, userid, shortUrl)
 	SaveUrlMapping(shortUrl, originalUrl, userid)
 
 	// fetch original url
-	receivedUrl, err := RetrieveInitialUrl(shortUrl, userid)
+	receivedUrl := RetrieveInitialUrl(shortUrl)
 
-	if err != nil{
-		panic(fmt.Sprint(err))
-	}
+	assert.Equal(t, originalUrl, receivedUrl)
+}
 
+func TestFetchMetadata(t *testing.T) {
+	originalUrl := "https://youtu.be/dQw4w9WgXcQ"
+	userid := "950c182b-1745-4aa9-b872-d8c558fadc8d"
+	shortUrl := "lkoyw"
+
+	SaveUrlMapping(shortUrl, originalUrl, userid)
+
+	receivedUserId, receivedUrl := FetchMetadata(shortUrl)
+
+	assert.Equal(t, userid, receivedUserId)
 	assert.Equal(t, originalUrl, receivedUrl)
 }

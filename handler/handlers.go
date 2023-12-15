@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/papadonut9/shawtyfy/dynamodb"
 	"github.com/papadonut9/shawtyfy/generator"
 	"github.com/papadonut9/shawtyfy/store"
 )
@@ -15,8 +16,8 @@ type UrlCreateRequest struct {
 	UserId  string `json:"user_id" binding:"required"`
 }
 
-type UrlFetchRequest struct {
-	UserId string `json:"user_id" binding:"required"`
+type UrlRequest struct {
+	ShortUrl string `json:"short_url" binding:"required"`
 }
 
 // Handler stubs
@@ -30,14 +31,6 @@ func CreateShortUrl(ctx *gin.Context) {
 	shortUrl := generator.GenerateShortLink(creationRequest.LongUrl, creationRequest.UserId)
 	store.SaveUrlMapping(shortUrl, creationRequest.LongUrl, creationRequest.UserId)
 
-	cookie := http.Cookie{
-		Name:     "user_id",
-		Value:    creationRequest.UserId,
-		HttpOnly: true,
-	}
-
-	http.SetCookie(ctx.Writer, &cookie)
-
 	host := "http://localhost:9808/"
 	ctx.JSON(200, gin.H{
 		"message":   "Short url creation successful!",
@@ -47,58 +40,105 @@ func CreateShortUrl(ctx *gin.Context) {
 
 // HTTP redirection function
 func HandleShortUrlRedirect(ctx *gin.Context) {
-	var fetchRequest UrlFetchRequest
-
-	// if err := ctx.ShouldBindJSON(&fetchRequest); err != nil {
-	// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
-	// Read the user_id from the cookie
-	cookie, err := ctx.Request.Cookie("user_id")
-	if err != nil {
-		panic(fmt.Sprint(err))
-	}
-
-	fetchRequest.UserId = cookie.Value
-
 	shortUrl := ctx.Param("shortUrl")
-	initialUrl, err := store.RetrieveInitialUrl(shortUrl, fetchRequest.UserId)
+	initialUrl := store.RetrieveInitialUrl(shortUrl)
 
-	if err != nil {
-		panic(fmt.Sprint(err))
-	}
 	// Check if the initial URL is absolute or relative
 	if !strings.HasPrefix(initialUrl, "http://") && !strings.HasPrefix(initialUrl, "https://") {
 		initialUrl = "http://" + initialUrl
 	}
-
 	ctx.Redirect(302, initialUrl)
 }
 
-// Fetch total key count in the database
+// fetch total number of keys
 func HandleKeyCount(ctx *gin.Context) {
 	count, err := store.RetreiveKeyCount()
 
 	if err != nil {
-		panic(fmt.Sprintf("Error retreiving key count | %v", err))
+		panic(fmt.Sprintf("Error retreiving key count: %v\n", err))
 	}
 
+	// host := "http://localhost:9808/"
 	ctx.JSON(200, gin.H{
 		"key_count": count,
 	})
 }
 
-// Handle Fetch Url by id
-func HandleFetchUrlbyId(ctx *gin.Context) {
-	var fetchRequest UrlFetchRequest
-	if err := ctx.ShouldBindJSON(&fetchRequest); err != nil {
+// fetch all keys
+func RetreiveAllKeys(ctx *gin.Context) {
+	keys, err := store.RetreiveAllKeys()
+
+	if err != nil {
+		panic(fmt.Sprintf("Error retreiving keys: %v\n", err))
+	}
+
+	ctx.JSON(200, gin.H{
+		"keys": keys,
+	})
+}
+
+func DeleteKey(ctx *gin.Context) {
+	var deletionRequest UrlRequest
+
+	if err := ctx.ShouldBindJSON(&deletionRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	var message string
+	var redisStatus, dynamodbStatus string
+
+	key := deletionRequest.ShortUrl
+	dynamodbResult, dynamodbErr := dynamodb.RemoveUrl(key)
+	redisResult, redisErr := store.RemoveKey(key)
+
+	// successful deletes
+	if redisErr == nil && dynamodbErr == nil {
+		message = "deletion successful"
+		redisStatus = "OK"
+		dynamodbStatus = "OK"
+
+		// if redis fails
+	} else if redisErr != nil && dynamodbErr == nil {
+		message = "deletion unsuccessful"
+		redisStatus = "FAIL"
+		dynamodbStatus = "OK"
+
+		// if dynamodb fails
+	} else if redisErr == nil && dynamodbErr != nil {
+		message = "deletion unsuccessful"
+		redisStatus = "OK"
+		dynamodbStatus = "FAIL"
+
+		// everything goes haywire
+	} else {
+		message = "deletion unsuccessful"
+		redisStatus = "FAIL"
+		dynamodbStatus = "FAIL"
+	}
+
 	ctx.JSON(200, gin.H{
-		"user_id": fetchRequest.UserId,
-		"urls":    store.FetchUrlsByUserID(fetchRequest.UserId),
+		"message":         message,
+		"redis":           redisStatus,
+		"dynamodb":        dynamodbStatus,
+		"redis_result":    redisResult,
+		"dynamodb_result": dynamodbResult,
+	})
+}
+
+func GetMetadata(ctx *gin.Context) {
+	var urlRequest UrlRequest
+
+	if err := ctx.ShouldBindJSON(&urlRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	key := urlRequest.ShortUrl
+	userid, url := store.FetchMetadata(key)
+
+	ctx.JSON(200, gin.H{
+		"url":     url,
+		"user_id": userid,
 	})
 }
