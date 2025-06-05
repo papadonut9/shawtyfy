@@ -59,6 +59,17 @@ Run all unit tests with:
 go test ./...
 ```
 
+## Docker
+
+Build the container image:
+```bash
+docker build -t shawtyfy .
+```
+
+Run the container:
+```bash
+docker run --rm -p 9808:9808 shawtyfy
+```
 ## Contributing
 
 Contributions are welcome! Please open an issue or pull request to propose changes or improvements.
